@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.gradle.api.file.FileTree;
+import org.gradle.api.file.FileVisitDetails;
+import org.gradle.api.file.FileVisitor;
 import org.gradle.api.internal.file.FileOperations;
 import org.gradle.api.internal.tasks.compile.JavaCompileSpec;
 import org.gradle.api.internal.tasks.compile.incremental.recomp.RecompilationSpec;
@@ -78,12 +80,36 @@ class IncrementalCompilationInitializer {
         spec.setClasses(classesToProcess);
     }
 
-    private void deleteStaleFilesIn(PatternSet classesToDelete, File destinationDir) {
+    private void deleteStaleFilesIn(PatternSet filesToDelete, final File destinationDir) {
         if (destinationDir == null) {
             return;
         }
-        FileTree deleteMe = fileOperations.fileTree(destinationDir).matching(classesToDelete);
-        fileOperations.delete(deleteMe);
+        fileOperations.fileTree(destinationDir).matching(filesToDelete).visit(new FileVisitor() {
+
+            @Override
+            public void visitDir(FileVisitDetails dirDetails) {
+            }
+
+            @Override
+            public void visitFile(FileVisitDetails fileDetails) {
+                File file = fileDetails.getFile();
+                file.delete();
+                deleteEmptyParents(file);
+            }
+
+            private void deleteEmptyParents(File file) {
+                File parentDir = file.getParentFile();
+                if (parentDir != null && !parentDir.equals(destinationDir) && isEmpty(parentDir)) {
+                    parentDir.delete();
+                    deleteEmptyParents(parentDir);
+                }
+            }
+
+            private boolean isEmpty(File dir) {
+                String[] children = dir.list();
+                return children != null && children.length == 0;
+            }
+        });
     }
 
     @VisibleForTesting

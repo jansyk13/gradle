@@ -33,9 +33,23 @@ public class SimpleStaleClassCleaner extends StaleClassCleaner {
             for (String prefix : prefixes) {
                 if (f.getAbsolutePath().startsWith(prefix) && f.isFile()) {
                     didWork |= f.delete();
+                    deleteEmptyParents(f);
                 }
             }
         }
+    }
+
+    private void deleteEmptyParents(File f) {
+        File parentDir = f.getParentFile();
+        if (parentDir != null && !prefixes.contains(parentDir.getAbsolutePath()) && isEmpty(parentDir)) {
+            didWork |= parentDir.delete();
+            deleteEmptyParents(parentDir);
+        }
+    }
+
+    private boolean isEmpty(File parentDir) {
+        String[] children = parentDir.list();
+        return children != null && children.length == 0;
     }
 
     public boolean getDidWork() {

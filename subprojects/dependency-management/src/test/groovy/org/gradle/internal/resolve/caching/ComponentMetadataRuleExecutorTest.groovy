@@ -93,7 +93,7 @@ class ComponentMetadataRuleExecutorTest extends Specification {
         cachePolicy = Mock()
         detailsToResult = Mock()
         onCacheMiss = Mock()
-        executor = new ComponentMetadataRuleExecutor(cacheRepository, cacheDecoratorFactory, valueSnapshotter, timeProvider, serializer)
+        executor = new ComponentMetadataRuleExecutor(cacheRepository, cacheDecoratorFactory, valueSnapshotter, timeProvider, serializer, false)
     }
 
     // Tests --refresh-dependencies behavior
